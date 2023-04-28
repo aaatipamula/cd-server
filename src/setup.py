@@ -1,7 +1,7 @@
 import os
 from secret_key import gen_key
 
-def main():
+def checkEnviorn():
     if os.environ.get("FLASK_SECRET_KEY") is None:
         print(f"Please generate and export your secret key.\n\
             This can be done with the following command:\n\
