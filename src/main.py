@@ -1,52 +1,72 @@
 from flask import Flask, request 
 from secret_key import compare
+from dotenv import load_dotenv
+import logging
 import os
-import setup
 import docker
 import subprocess as sp
 import os.path as path
 
+load_dotenv(".env")
+
 app = Flask("cd-server")
 dockerClient = docker.from_env()
 
-DEV_DIRECTORY = app.config.get("DEVFOLDER")
-SECRET_KEY = app.config.get("SECRET_KEY")
+DEV_DIRECTORY = os.environ.get("DEV_FOLDER")
+SECRET_KEY = os.environ.get("SECRET_KEY")
+
+# Check env
+if not DEV_DIRECTORY or not SECRET_KEY:
+    raise RuntimeError("Missing required environment variables")
 
 
 @app.post('/webhooks')
 def push_event():
 
     # Define repo and associated directory
-    repo: str = request.json["repository"]["name"]
-    repoDir: str = path.join(DEV_DIRECTORY, repo)
+    repo = request.json["repository"]["name"]
+    tagname = "aaatipamula/" + repo
+    repoDir = path.join(DEV_DIRECTORY, repo)
+    scriptDir = path.join(repoDir, "scripts")
 
-    # Define secret keys and server key
-    serverKey = request.headers.get('HTTP_X_HUB_SIGNATURE_256')
-    secretKeyb = bytes(SECRET_KEY, 'utf-8')
+    request_signature = request.headers.get('X_HUB_SIGNATURE_256')
+    if not request_signature:
+        return {"error": "Missing request signature"}, 400
 
     # Check for valid requests
-    if compare(secretKeyb, request.get_data(as_text=True), serverKey):
+    if compare(SECRET_KEY, request.get_data(as_text=True), request_signature):
 
         if not path.isdir(repoDir):
             os.chdir(DEV_DIRECTORY)
-            sp.run(['git', 'clone', f'https://github.com/aaatipamula/{repo}.git'])
+            logging.debug(f"Cloning {repo} into {repoDir}")
+            sp.run(['git', 'clone', f'https://github.com/aaatipamula/{repo}'])
+            os.chdir(repoDir)
         else:
             os.chdir(repoDir)
+            logging.debug(f"Updating {repo} from master")
             sp.run(['git', 'pull', 'origin', 'master'])
+
+        if not path.isdir(scriptDir):
+            return {"error": "Scripts directory does not exist"}, 404
 
         for container in dockerClient.containers.list():
             if container.name == repo:
+                logging.debug("Stopping container {container.name}")
+                container.stop()
+                logging.info(f"Removing container {container.name}")
                 container.remove(force=True)
 
-        if f"{repo}:latest" in [image.tags for image in dockerClient.images.list()]:
-            dockerClient.images.remove(image=repo)
+        if f"{tagname}:latest" in [image.tags for image in dockerClient.images.list()]:
+            logging.info("Removing image {tagname}")
+            dockerClient.images.remove(image=tagname)
 
-        dockerClient.build(path=path.join(repoDir, "scripts"), tag=repo)
-        dockerClient.run(repo, name=repo, detach=True)
+        logging.info("Building image {tagname}")
+        dockerClient.images.build(path=path.join(repoDir, "scripts"), tag=tagname)
+        logging.info("Starting container {repo}")
+        dockerClient.containers.run(tagname, name=repo, detach=True)
+
+        return {"success": "Image is up and running."}, 200
 
     else:
-        return {"error": "Not a valid request."}, 404
+        return {"error": "Not a valid request."}, 400
 
-if __name__ == "__main__":
-    setup.checkEnviorn()
-    app.run()
