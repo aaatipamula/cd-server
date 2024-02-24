@@ -14,7 +14,7 @@ fi
 
 python3 -m venv .venv
 
-key=$(python3 ./src/secretkey.py)
+key=$(python3 ./src/secret_key.py)
 devfolder=$(pwd | sed 's/\/[a-zA-Z0-1_-]\+$/\/projects/'])
 
 mkdir $devfolder
