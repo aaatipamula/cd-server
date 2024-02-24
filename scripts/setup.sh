@@ -49,4 +49,8 @@ sudo cp $servicefile $servicedir
 echo "NOTE: Please load venv and install packages"
 echo "  source .venv/bin/activate"
 echo "  pip install -r requirements.txt"
+echo ""
+echo "Start gunicorn service with:"
+echo "sudo systemctl start gunicorn.socket"
+echo "sudo systemctl enable gunicorn.socket"
 
