@@ -1,19 +1,26 @@
+from werkzeug.middleware.proxy_fix import ProxyFix
 from flask import Flask, request 
-from secret_key import compare
 from dotenv import load_dotenv
+import docker
+
 import logging
 import os
-import docker
 import subprocess as sp
 import os.path as path
+
+from secret_key import compare
 
 load_dotenv(".env")
 
 app = Flask("cd-server")
+app.wsgi_app = ProxyFix(
+    app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1
+)
+
 dockerClient = docker.from_env()
 
-DEV_DIRECTORY = os.environ.get("DEV_FOLDER")
-SECRET_KEY = os.environ.get("SECRET_KEY")
+DEV_DIRECTORY = os.environ.get("FLASK_DEV_FOLDER")
+SECRET_KEY = os.environ.get("FLASK_SECRET_KEY")
 
 # Check env
 if not DEV_DIRECTORY or not SECRET_KEY:

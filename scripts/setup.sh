@@ -14,6 +14,14 @@ fi
 
 python3 -m venv .venv
 
+key=$(python3 ./src/secretkey.py)
+devfolder=$(pwd | sed 's/\/[a-zA-Z0-1_-]\+$/\/projects/'])
+
+mkdir $devfolder
+
+echo FLASK_SECRET_KEY=$key > .env
+echo FLASK_DEV_FOLDER=$devfolder >> .env
+
 echo "WARNING: Requires sudo access to write service files."
 
 socketfile=gunicorn.socket
@@ -35,8 +43,8 @@ printf "\n\tsrc/main:app \n\n" >> $servicefile
 
 printf "[Install]\nWantedBy=multi-user.target\n" >> $servicefile
 
-# sudo cp $socketfile $servicedir
-# sudo cp $servicefile $servicedir
+sudo cp $socketfile $servicedir
+sudo cp $servicefile $servicedir
 
 echo "NOTE: Please load venv and install packages"
 echo "  source .venv/bin/activate"

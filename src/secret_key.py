@@ -14,12 +14,8 @@ def compare(secret_key: str, request_body: str, request_signature: str) -> bool:
     generated_hash = "sha256=" + hmac_obj.hexdigest()
     return hmac.compare_digest(generated_hash, request_signature)
 
-def export_key():
-    secret = gen_key()
-    key_var = f"FLASK_SECRET_KEY={secret}"
-    with open(".env", "w") as file:
-        file.write(key_var)
-    print(key_var)
+def main():
+    print(gen_key())
 
 if __name__ == "__main__":
-    export_key()
+    main()
