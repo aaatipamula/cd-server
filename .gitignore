@@ -1,4 +1,6 @@
 __*
 test*
 .env
+.venv/
 *.out
+gunicorn.*

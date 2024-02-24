@@ -24,6 +24,7 @@ if not DEV_DIRECTORY or not SECRET_KEY:
 def push_event():
 
     # Define repo and associated directory
+    # TODO: Sanitize repo name
     repo = request.json["repository"]["name"]
     tagname = "aaatipamula/" + repo
     repoDir = path.join(DEV_DIRECTORY, repo)
@@ -39,7 +40,7 @@ def push_event():
         if not path.isdir(repoDir):
             os.chdir(DEV_DIRECTORY)
             logging.debug(f"Cloning {repo} into {repoDir}")
-            sp.run(['git', 'clone', f'https://github.com/aaatipamula/{repo}'])
+            sp.run(['git', 'clone', f'https://github.com/{tagname}'])
             os.chdir(repoDir)
         else:
             os.chdir(repoDir)
@@ -51,7 +52,7 @@ def push_event():
 
         for container in dockerClient.containers.list():
             if container.name == repo:
-                logging.debug("Stopping container {container.name}")
+                logging.info(f"Stopping container {container.name}")
                 container.stop()
                 logging.info(f"Removing container {container.name}")
                 container.remove(force=True)
@@ -59,10 +60,12 @@ def push_event():
         if f"{tagname}:latest" in [image.tags for image in dockerClient.images.list()]:
             logging.info("Removing image {tagname}")
             dockerClient.images.remove(image=tagname)
+        else:
+            logging.error(f"Image {tagname}:latest not found.")
 
-        logging.info("Building image {tagname}")
-        dockerClient.images.build(path=path.join(repoDir, "scripts"), tag=tagname)
-        logging.info("Starting container {repo}")
+        logging.info(f"Building image {tagname}")
+        dockerClient.images.build(path=scriptDir, tag=tagname)
+        logging.info(f"Starting container {repo}")
         dockerClient.containers.run(tagname, name=repo, detach=True)
 
         return {"success": "Image is up and running."}, 200
