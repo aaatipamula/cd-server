@@ -8,7 +8,7 @@ import os
 import subprocess as sp
 import os.path as path
 
-from secret_key import compare
+from server.secret_key import compare
 
 load_dotenv(".env")
 

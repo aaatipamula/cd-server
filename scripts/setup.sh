@@ -5,7 +5,7 @@ servicefile=gunicorn.service
 
 servicedir=/etc/systemd/system/
 
-key=$(python3 ./src/secret_key.py)
+key=$(python3 ./server/secret_key.py)
 devfolder=$(pwd | sed 's/\/[a-zA-Z0-1_-]\+$/\/projects/')
 
 clean() {
@@ -36,6 +36,11 @@ fi
 # Start a venv
 python3 -m venv .venv
 
+if [ "$?" -ne "0" ]
+then
+  echo "Something went wrong starting a venv..."
+fi
+
 # Make a projects folder
 mkdir $devfolder
 
@@ -50,26 +55,26 @@ printf "[Install]\nWantedBy=sockets.target\n" >> $socketfile
 
 # Create the gunicorn.service file
 printf "[Unit]\nDescription=gunicorn daemon\nRequires=gunicorn.socket\nAfter=network.target\n\n" > $servicefile
-printf "[Service]\nUser=$1\nGroup=www-data\nWorkingDirectory=$path\n" >> $servicefile
-printf "ExecStart=$path/.venv/bin/gunicorn \\" >> $servicefile
+printf "[Service]\nUser=$1\nGroup=www-data\nWorkingDirectory=$(pwd)\n" >> $servicefile
+printf "ExecStart=$(pwd)/.venv/bin/gunicorn \\" >> $servicefile
 printf "\n\t--access-logfile - \\" >> $servicefile
 printf "\n\t--workers 4 \\" >> $servicefile
 printf "\n\t--bind unix:/run/gunicorn.sock \\" >> $servicefile
-printf "\n\tsrc/main:app \n\n" >> $servicefile
+printf "\n\tserver.serve:app \n\n" >> $servicefile
 printf "[Install]\nWantedBy=multi-user.target\n" >> $servicefile
 
 
 # Additional requirements
 echo "NOTE: Please load venv and install packages"
 echo "  source .venv/bin/activate"
-echo "  pip install -r requirements.txt\n"
+echo "  pip install -r requirements.txt"
+echo "  pip install gunicorn"
 
 # Copy over the service files
 echo "WARNING: Requires sudo access to write service files."
-echo "  sudo cp $socketfile $servicedir"
-echo "  sudo cp $servicefile $servicedir\n"
+echo "  sudo cp $socketfile $servicefile $servicedir\n"
 
-# Start the gunicorn service
+# Start the gunicorn socket
 echo "Start gunicorn service with:"
 echo "  sudo systemctl start gunicorn.socket"
 echo "  sudo systemctl enable gunicorn.socket"
