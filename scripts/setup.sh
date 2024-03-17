@@ -5,7 +5,7 @@ servicefile=gunicorn.service
 
 servicedir=/etc/systemd/system/
 
-key=$(python3 ./server/secret_key.py)
+key=$(python3 ./server/secret.py)
 devfolder=$(pwd | sed 's/\/[a-zA-Z0-1_-]\+$/\/projects/')
 
 clean() {
@@ -68,7 +68,7 @@ printf "[Install]\nWantedBy=multi-user.target\n" >> $servicefile
 echo "NOTE: Please load venv and install packages"
 echo "  source .venv/bin/activate"
 echo "  pip install -r requirements.txt"
-echo "  pip install gunicorn"
+echo "  pip install gunicorn\n"
 
 # Copy over the service files
 echo "WARNING: Requires sudo access to write service files."
