@@ -1,5 +1,7 @@
+
 from dataclasses import dataclass
 from typing import Optional
+import re
 
 from server.utils.githubUser import GitHubUser
 
@@ -84,3 +86,13 @@ class Repository:
     open_issues: int
     watchers: int
     default_branch: str
+
+    def __post_init__(self) -> None:
+        if re.match(r"^[\w\-]+$", self.name) is None:
+            raise Exception("Invalid repository name") # Raise specific exception
+
+        if re.match(r"^[\w\-]+/[\w\-]+$", self.full_name) is None:
+            raise Exception("Invalid full name") # Raise specific exception
+
+        if re.match(r"^https://github\.com/[\w\-]+/[\w\-]+\.git$", self.clone_url) is None:
+            raise Exception("Invalid clone URL") # Raise specific exception

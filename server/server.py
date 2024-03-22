@@ -7,6 +7,7 @@ import subprocess as sp
 import os.path as path
 
 from server.secret import compare
+from server.dockerManager import DockerManager
 from server.utils.githubPullRequestPayload import Payload
 
 load_dotenv(".env")
@@ -16,45 +17,44 @@ DEV_DIRECTORY = os.environ.get("FLASK_DEV_FOLDER", "")
 SECRET_KEY = os.environ.get("FLASK_SECRET_KEY", "")
 
 # Check env
-if not(DEV_DIRECTORY or SECRET_KEY):
+if not DEV_DIRECTORY or not SECRET_KEY:
     raise RuntimeError("Missing required environment variables")
+
+if not path.isdir(DEV_DIRECTORY):
+    os.mkdir(DEV_DIRECTORY)
 
 
 @app.post('/webhooks')
 def push_event():
 
-    # Define repo and associated directory
-    # TODO: Sanitize repo name
-    payload = Payload(**request.json)
-    tagname = payload.repository.full_name
-    repo_dir = path.join(DEV_DIRECTORY, payload.repository.name)
+    try:
+        payload = Payload(**request.json)
 
-    # TODO: create function to find Dockerfile
-    script_dir = path.join(repo_dir, "scripts")
+        repo_dir = path.join(DEV_DIRECTORY, payload.repository.name)
+        dockerManager = DockerManager(payload.repository.name, payload.repository.full_name, repo_dir)
 
-    request_signature = request.headers.get('X_HUB_SIGNATURE_256')
-    if not request_signature:
-        return {"error": "Missing request signature"}, 400
+        request_signature = request.headers.get('X_HUB_SIGNATURE_256')
+        if request_signature is None:
+            # Change to raise error
+            return {"error": "Missing request signature."}, 400
 
-    # Check for valid requests
-    if compare(SECRET_KEY, request.get_data(as_text=True), request_signature):
+        # Check for valid requests
+        if compare(SECRET_KEY, request.get_data(as_text=True), request_signature):
 
-        if not path.isdir(repo_dir):
-            os.chdir(DEV_DIRECTORY)
-            logging.debug(f"Cloning {payload.repository.name} into {repo_dir}")
-            sp.run(['git', 'clone', payload.repository.clone_url])
-            os.chdir(repo_dir)
+            if not path.isdir(repo_dir):
+                os.chdir(DEV_DIRECTORY)
+                sp.run(['git', 'clone', payload.repository.clone_url])
+                os.chdir(repo_dir)
+            else:
+                os.chdir(repo_dir)
+                sp.run(['git', 'pull', 'origin', 'master'])
+
+            dockerManager.reload()
+            return {"success": "Image is up and running."}, 200
+
         else:
-            os.chdir(repo_dir)
-            logging.debug(f"Updating {payload.repository.name} from master")
-            sp.run(['git', 'pull', 'origin', 'master'])
+            # Change to raise error
+            return {"error": "Invalid request."}, 400
 
-        if not path.isdir(script_dir):
-            return {"error": "Scripts directory does not exist"}, 404
-
-
-        return {"success": "Image is up and running."}, 200
-
-    else:
-        return {"error": "Not a valid request."}, 400
-
+    except Exception as err:
+        return {"error": str(err)}, 400
