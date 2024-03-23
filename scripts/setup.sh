@@ -50,12 +50,12 @@ echo FLASK_SECRET_KEY=$key > .env
 echo FLASK_DEV_FOLDER=$devfolder >> .env
 
 # Create the gunicorn.socket file
-printf "[Unit]\nDescription=gunicorn socket\n\n" > $socketfile
+printf "[Unit]\nDescription=Gunicorn socket\n\n" > $socketfile
 printf "[Socket]\nListenStream=/run/gunicorn.sock\n\n" >> $socketfile
 printf "[Install]\nWantedBy=sockets.target\n" >> $socketfile
 
 # Create the gunicorn.service file
-printf "[Unit]\nDescription=gunicorn daemon\nRequires=gunicorn.socket\nAfter=network.target\n\n" > $servicefile
+printf "[Unit]\nDescription=Gunicorn daemon\nRequires=gunicorn.socket\nAfter=network.target\n\n" > $servicefile
 printf "[Service]\nUser=$1\nGroup=www-data\nWorkingDirectory=$(pwd)\n" >> $servicefile
 printf "ExecStart=$(pwd)/.venv/bin/gunicorn \\" >> $servicefile
 printf "\n\t--access-logfile - \\" >> $servicefile
@@ -77,6 +77,6 @@ echo "  sudo cp $socketfile $servicefile $servicedir\n"
 
 # Start the gunicorn socket
 echo "Start gunicorn service with:"
-echo "  sudo systemctl start gunicorn.socket"
-echo "  sudo systemctl enable gunicorn.socket"
+echo "  sudo systemctl start gunicorn"
+echo "  sudo systemctl enable gunicorn"
 
