@@ -1,8 +1,8 @@
 from flask import Flask, request 
 from dotenv import load_dotenv
 
-import logging
 import os
+import traceback
 import subprocess as sp
 import os.path as path
 
@@ -29,9 +29,8 @@ def push_event():
 
     try:
         payload = Payload(**request.json)
-
         repo_dir = path.join(DEV_DIRECTORY, payload.repository.name)
-        dockerManager = DockerManager(payload.repository.name, payload.repository.full_name, repo_dir)
+        dockerManager = DockerManager(app.logger, payload.repository.name, payload.repository.full_name, repo_dir)
 
         request_signature = request.headers.get('X_HUB_SIGNATURE_256')
         if request_signature is None:
@@ -47,7 +46,8 @@ def push_event():
                 os.chdir(repo_dir)
             else:
                 os.chdir(repo_dir)
-                sp.run(['git', 'pull', 'origin', 'master'])
+                # remote = sp.run(['git', 'symbolic-ref', 'refs/remotes/origin/HEAD', '--short'], stdout=sp.PIPE).stdout.decode()
+                sp.run(['git', 'pull'])
 
             dockerManager.reload()
             return {"success": "Image is up and running."}, 200
@@ -57,4 +57,6 @@ def push_event():
             return {"error": "Invalid request."}, 400
 
     except Exception as err:
+        traceback.print_exception(err)
         return {"error": str(err)}, 400
+
