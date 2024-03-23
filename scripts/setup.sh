@@ -61,7 +61,7 @@ printf "ExecStart=$(pwd)/.venv/bin/gunicorn \\" >> $servicefile
 printf "\n\t--access-logfile - \\" >> $servicefile
 printf "\n\t--workers 4 \\" >> $servicefile
 printf "\n\t--bind unix:/run/gunicorn.sock \\" >> $servicefile
-printf "\n\tserver.serve:app \n\n" >> $servicefile
+printf "\n\tserver.main:app \n\n" >> $servicefile
 printf "[Install]\nWantedBy=multi-user.target\n" >> $servicefile
 
 
