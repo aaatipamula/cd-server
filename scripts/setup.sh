@@ -11,7 +11,8 @@ devfolder=$(pwd | sed 's/\/[a-zA-Z0-1_-]\+$/\/projects/')
 clean() {
   rm gunicorn.* .env
   rm -rf .venv/
-  rmdir $devfolder
+  echo "Permanently removing $devfolder"
+  rm -rf $devfolder
 }
 
 

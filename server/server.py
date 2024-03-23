@@ -13,6 +13,8 @@ from server.utils.githubPullRequestPayload import Payload
 load_dotenv(".env")
 app = Flask("cd-server")
 
+app.logger.info("Starting server")
+
 DEV_DIRECTORY = os.environ.get("FLASK_DEV_FOLDER", "")
 SECRET_KEY = os.environ.get("FLASK_SECRET_KEY", "")
 
@@ -30,25 +32,33 @@ def push_event():
     try:
         payload = Payload(**request.json)
         repo_dir = path.join(DEV_DIRECTORY, payload.repository.name)
-        dockerManager = DockerManager(app.logger, payload.repository.name, payload.repository.full_name, repo_dir)
+        dockerManager = DockerManager(
+            payload.repository.name,
+            payload.repository.full_name,
+            repo_dir,
+            logger=app.logger
+        )
 
         request_signature = request.headers.get('X_HUB_SIGNATURE_256')
         if request_signature is None:
             # Change to raise error
+            app.logger.error("No X-Hub-Signature-256 signature found")
             return {"error": "Missing request signature."}, 400
 
         # Check for valid requests
         if compare(SECRET_KEY, request.get_data(as_text=True), request_signature):
 
             if not path.isdir(repo_dir):
+                app.logger.info("Cloning directory.")
                 os.chdir(DEV_DIRECTORY)
                 sp.run(['git', 'clone', payload.repository.clone_url])
                 os.chdir(repo_dir)
             else:
+                app.logger.info(f"Updating {payload.repository.name}")
                 os.chdir(repo_dir)
-                # remote = sp.run(['git', 'symbolic-ref', 'refs/remotes/origin/HEAD', '--short'], stdout=sp.PIPE).stdout.decode()
                 sp.run(['git', 'pull'])
 
+            app.logger.info(f"Reloading docker image for {payload.repository.name}")
             dockerManager.reload()
             return {"success": "Image is up and running."}, 200
 

@@ -1,12 +1,14 @@
 import docker
 
+
 import os.path as path
-from asyncio import sleep as asleep
+import logging
 
 class DockerManager:
 
-    def __init__(self, logger, name: str, tagname: str, build_context: str) -> None:
-        self.logger = logger
+    def __init__(self, name: str, tagname: str, build_context: str, logger = None) -> None:
+        self.logger = logger if logger else logging.getLogger("dockerManager")
+        self.logger.setLevel(logging.DEBUG)
         self.name = name
         self.tagname = tagname
         self.build_context = build_context
@@ -26,9 +28,9 @@ class DockerManager:
         for container in self.client.containers.list(all=True):
             if container.name == self.name:
                 # log stop and remove
-                self.logger.info("Stopping container: {container.name}")
+                self.logger.debug(f"Stopping container: {container.name}")
                 container.stop()
-                self.logger.info("Removing container: {container.name}")
+                self.logger.debug(f"Removing container: {container.name}")
                 container.remove(v=True, force=True)
                 return
         # log error
@@ -37,27 +39,25 @@ class DockerManager:
     def deleteImage(self) -> None:
         if [f"{self.tagname}:latest"] in [image.tags for image in self.client.images.list()]:
             # log removing tag
-            self.logger.info(f"Deleting image: {self.tagname}")
+            self.logger.debug(f"Deleting image: {self.tagname}")
             self.client.images.remove(image=self.tagname)
         else:
             pass # log error
 
     def buildImage(self) -> None:
         # log building image
-        self.logger.info(f"Building new image: {self.tagname}")
-        self.client.images.build(path=self.build_context, dockerfile=self.dockerfile, tag=self.tagname)
+        self.logger.debug(f"Building new image: {self.tagname}")
+        self.client.images.build(
+            path=self.build_context,
+            dockerfile=self.dockerfile,
+            tag=self.tagname,
+            rm=True
+        )
 
     def runContainer(self) -> None:
         # log starting container
-        self.logger.info(f"Running new image: {self.name} with image {self.tagname}")
-        container = self.client.containers.run(self.tagname, name=self.name, detach=True)
-        timeout = 30 # timeout in seconds
-        period = 5 # how long to wait between checks
-        elased_time = 0 # keep track of e
-        while container.status != "running" or elased_time < timeout:
-            # asleep(period)
-            elased_time += period
-
+        self.logger.debug(f"Running new image: {self.name} with image {self.tagname}")
+        self.client.containers.run(self.tagname, name=self.name, detach=True)
 
     def reload(self) -> None:
         self.stopContainer()
