@@ -6,11 +6,6 @@
 DEV_FOLDER # Path to directory to host files
 SECRET_KEY # Key to verify, use src/secret_key.py to generate
 ```
-## Forward Github Webhooks
-
-```sh
-nohup gh webhook forward --repo=aaatipamula/reponame --events=push --url=http://localhost:5000/webhooks &
-```
 ## Host Locally
 
 Setup `venv`
@@ -20,7 +15,7 @@ python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-Install Dependencies
+Install dependencies
 
 ```sh
 pip install -r requirements.txt
@@ -30,21 +25,27 @@ pip install gunicorn
 Start Gunicorn
 
 ```sh
-nohup gunicorn -w 4 'src/main:app' > gunicorn.log 2>&1 &
+nohup gunicorn -w 4 'server.main:app' > gunicorn.log 2>&1 &
 ```
 
-or create a service
+Or create a service
 
 ```sh
-./scripts/createsocket.sh <username>
-sudo systemctl start gunicorn.socket
-sudo systemctl enable gunicorn.socket
+./scripts/createsocket.sh YOUR-USERNAME
+sudo systemctl start gunicorn
+sudo systemctl enable gunicorn
 ```
 
-# Running
+# Development Server
 
-## Devlopment
+## Start Server
 
 ```sh
-python3 -m flask --app src/main.py run
+python3 -m flask --app server.server run
+```
+
+## Forward Github Webhooks
+
+```sh
+nohup gh webhook forward --repo=aaatipamula/REPOSITORY-NAME --events=pull_request --url=http://localhost:5000/webhooks &
 ```
