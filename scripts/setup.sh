@@ -18,14 +18,18 @@ clean() {
 
 
 # Check for proper command line arguments
-if [ -z $1 ] || [ -z $2 ]
+if [ -z $1 ]
 then
-  echo "Please provide a username and domain name or IP."
+  echo "Please provide a username"
   exit 1
 elif [ "$1" = "clean" ]
 then
   clean
   exit 0
+elif [ -z $2 ]
+then
+  echo "Please provide a domain name or IP"
+  exit 1
 fi
 
 # Check if we are in the correct location
