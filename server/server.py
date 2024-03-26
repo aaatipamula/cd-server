@@ -45,6 +45,9 @@ def push_event():
             app.logger.error("No X-Hub-Signature-256 signature found")
             return {"error": "Missing request signature."}, 400
 
+        if payload.action != "closed":
+            return {"msg": f"Ignoring action {payload.action}."}, 100
+
         # Check for valid requests
         if compare(SECRET_KEY, request.get_data(as_text=True), request_signature):
 
@@ -60,13 +63,14 @@ def push_event():
 
             app.logger.info(f"Reloading docker image for {payload.repository.name}")
             dockerManager.reload()
-            return {"success": "Image is up and running."}, 200
+
+            return {"success": "Image is up and running."}, 201
 
         else:
             # Change to raise error
-            return {"error": "Invalid request."}, 400
+            return {"error": "Invalid request."}, 401
 
     except Exception as err:
         traceback.print_exception(err)
-        return {"error": str(err)}, 400
+        return {"error": "Something unexpected went wrong."}, 500
 

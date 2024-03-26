@@ -22,6 +22,7 @@ class DockerManager:
         location_two = path.join(directory, "scripts", "Dockerfile")
         if path.isfile(location_one): return location_one
         elif path.isfile(location_two): return location_two
+        # Raise specific exception type
         raise Exception("Dockerfile not found")
 
     def stopContainer(self) -> None:
@@ -35,6 +36,7 @@ class DockerManager:
                 return
         # log error
         self.logger.error(f"Could not find container with name: {self.name}")
+        # Raise specific exception type
 
     def deleteImage(self) -> None:
         if [f"{self.tagname}:latest"] in [image.tags for image in self.client.images.list()]:
@@ -42,7 +44,7 @@ class DockerManager:
             self.logger.debug(f"Deleting image: {self.tagname}")
             self.client.images.remove(image=self.tagname)
         else:
-            pass # log error
+            pass # log error and raise specific exception
 
     def buildImage(self) -> None:
         # log building image
@@ -56,6 +58,7 @@ class DockerManager:
 
     def runContainer(self) -> None:
         # log starting container
+        # TODO: Parse info for volumes etc
         self.logger.debug(f"Running new image: {self.name} with image {self.tagname}")
         self.client.containers.run(self.tagname, name=self.name, detach=True)
 
