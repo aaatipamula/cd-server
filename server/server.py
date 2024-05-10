@@ -15,6 +15,8 @@ app = Flask("cd-server")
 
 app.logger.info("Starting server")
 
+dockerManager = DockerManager(logger=app.logger)
+
 DEV_DIRECTORY = os.environ.get("FLASK_DEV_FOLDER", "")
 SECRET_KEY = os.environ.get("FLASK_SECRET_KEY", "")
 
@@ -30,14 +32,8 @@ if not path.isdir(DEV_DIRECTORY):
 def push_event():
 
     try:
-        payload = Payload(**request.json)
+        payload = Payload(**request.json) # Known pyright issue
         repo_dir = path.join(DEV_DIRECTORY, payload.repository.name)
-        dockerManager = DockerManager(
-            payload.repository.name,
-            payload.repository.full_name,
-            repo_dir,
-            logger=app.logger
-        )
 
         request_signature = request.headers.get('X_HUB_SIGNATURE_256')
         if request_signature is None:
@@ -62,7 +58,11 @@ def push_event():
                 sp.run(['git', 'pull'])
 
             app.logger.info(f"Reloading docker image for {payload.repository.name}")
-            dockerManager.reload()
+            dockerManager.reload(
+                payload.repository.name,
+                payload.repository.full_name,
+                repo_dir,
+            )
 
             return {"success": "Image is up and running."}, 201
 

@@ -1,20 +1,16 @@
 import docker
-
+from docker.errors import DockerException
 
 import os.path as path
 import logging
 
 class DockerManager:
 
-    def __init__(self, name: str, tagname: str, build_context: str, logger = None) -> None:
+    def __init__(self, logger = None) -> None:
         self.logger = logger if logger else logging.getLogger("dockerManager")
         self.logger.setLevel(logging.DEBUG)
-        self.name = name
-        self.tagname = tagname
-        self.build_context = build_context
 
         self.client = docker.from_env()
-        self.dockerfile = self.findDockerfile(build_context)
 
     @staticmethod
     def findDockerfile(directory: str) -> str:
@@ -23,48 +19,53 @@ class DockerManager:
         if path.isfile(location_one): return location_one
         elif path.isfile(location_two): return location_two
         # Raise specific exception type
-        raise Exception("Dockerfile not found")
+        raise DockerException("Dockerfile not found")
 
-    def stopContainer(self) -> None:
+    def stopContainer(self, name: str) -> None:
         for container in self.client.containers.list(all=True):
-            if container.name == self.name:
+            if container.name == name:
                 # log stop and remove
-                self.logger.debug(f"Stopping container: {container.name}")
+                self.logger.debug("Stopping container: %s", container.name)
                 container.stop()
-                self.logger.debug(f"Removing container: {container.name}")
+                self.logger.debug("Removing container: %s", container.name)
                 container.remove(v=True, force=True)
                 return
         # log error
-        self.logger.error(f"Could not find container with name: {self.name}")
-        # Raise specific exception type
+        self.logger.error("Could not find container with name: %s", name)
+        raise DockerException(f"Could not find container with name: {name}")
 
-    def deleteImage(self) -> None:
-        if [f"{self.tagname}:latest"] in [image.tags for image in self.client.images.list()]:
+    def deleteImage(self, tagname: str) -> None:
+        if [f"{tagname}:latest"] in [image.tags for image in self.client.images.list()]:
             # log removing tag
-            self.logger.debug(f"Deleting image: {self.tagname}")
-            self.client.images.remove(image=self.tagname)
+            self.logger.debug("Deleting image: %s", tagname)
+            self.client.images.remove(image=tagname)
         else:
-            pass # log error and raise specific exception
+            self.logger.error("Image with %s not found", tagname)
+            raise DockerException(f"Image with {tagname} not found")
 
-    def buildImage(self) -> None:
+    def buildImage(self, tagname: str, build_context: str, dockerfile: str) -> None:
         # log building image
-        self.logger.debug(f"Building new image: {self.tagname}")
+        self.logger.debug("Building new image: %s", tagname)
         self.client.images.build(
-            path=self.build_context,
-            dockerfile=self.dockerfile,
-            tag=self.tagname,
+            path=build_context,
+            dockerfile=dockerfile,
+            tag=tagname,
             rm=True
         )
+        # Maybe add a check for successful image build
 
-    def runContainer(self) -> None:
+    def runContainer(self, name: str, tagname: str) -> None:
         # log starting container
         # TODO: Parse info for volumes etc
-        self.logger.debug(f"Running new image: {self.name} with image {self.tagname}")
-        self.client.containers.run(self.tagname, name=self.name, detach=True)
+        self.logger.debug("Running new image: %s with image %s", name, tagname)
+        self.client.containers.run(tagname, name=name, detach=True)
+        # Try and add check for running container
 
-    def reload(self) -> None:
-        self.stopContainer()
-        self.deleteImage()
-        self.buildImage()
-        self.runContainer()
+    def reload(self, name: str, tagname: str, build_context: str,) -> None:
+        dockerfile = self.findDockerfile(build_context)
+
+        self.stopContainer(name)
+        self.deleteImage(tagname)
+        self.buildImage(tagname, build_context, dockerfile)
+        self.runContainer(name, tagname)
 
