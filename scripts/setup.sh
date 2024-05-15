@@ -40,7 +40,12 @@ then
 fi
 
 # Start a venv
-python3 -m venv .venv
+if ! [ -d .venv ]
+then
+  python3 -m venv .venv
+else
+  echo ".venv found"
+fi
 
 if [ "$?" -ne "0" ]
 then
@@ -50,9 +55,14 @@ fi
 # Make a projects folder
 mkdir $devfolder
 
-# Write our .env file
-echo FLASK_SECRET_KEY=$key > .env
-echo FLASK_DEV_FOLDER=$devfolder >> .env
+if ! [ -f .env ]
+then
+  # Write our .env file
+  echo FLASK_SECRET_KEY=$key > .env
+  echo FLASK_DEV_FOLDER=$devfolder >> .env
+else
+  echo ".env found"
+fi
 
 # Create the gunicorn.socket file
 printf "[Unit]\nDescription=Gunicorn socket\n\n" > $socketfile
