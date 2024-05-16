@@ -1,7 +1,7 @@
 #!/bin/sh
 
-socketfile=gunicorn.socket
-servicefile=gunicorn.service
+socketfile="gunicorn.socket"
+servicefile="gunicorn.service"
 nginxfile="cd_server"
 
 key=$(python3 ./server/secret.py)
@@ -95,25 +95,44 @@ printf "}\n" >> $nginxfile
 
 
 # Additional requirements
-echo "NOTE: Manually run the following commands to finish setup."
 echo "WARNING: Requires sudo access to write service files.\n"
+read -p "Continue? [y/n]: " is_continue
+
+if [ "$is_continue" = "y" ] || [ "$is_continue" = "Y" ]
+then
+  sudo cp $socketfile $servicefile /etc/systemd/system/
+  sudo cp $nginxfile /etc/nginx/sites-available/
+
+  sudo systemctl start gunicorn
+  sudo systemctl enable gunicorn
+
+  sudo ln -s /etc/nginx/sites-available/$nginxfile /etc/nginx/sites-enabled
+  sudo systemctl restart nginx
+
+elif [ "$is_continue" = "n" ] || [ "$is_continue" = "N" ]
+  echo "Skipping write, please find a way to enter the following commands."
+
+  # Copy over the service and config files
+  echo "Copy service and config files:"
+  echo "  sudo cp $socketfile $servicefile /etc/systemd/system/"
+  echo "  sudo cp $nginxfile /etc/nginx/sites-available/\n"
+
+  # Start the gunicorn socket
+  echo "Start gunicorn service:"
+  echo "  sudo systemctl start gunicorn"
+  echo "  sudo systemctl enable gunicorn\n"
+
+  # Setup nginx
+  echo "Setup nginx:"
+  echo "  sudo ln -s /etc/nginx/sites-available/$nginxfile /etc/nginx/sites-enabled"
+  echo "  sudo systemctl restart nginx"
+
+else
+  echo "Invalid option, skipping..."
+fi
 
 echo "Load venv and install packages"
 echo "  source .venv/bin/activate"
 echo "  pip install -r requirements.txt"
 echo "  pip install gunicorn\n"
-
-# Copy over the service and config files
-echo "Copy service and config files:"
-echo "  sudo cp $socketfile $servicefile /etc/systemd/system/"
-echo "  sudo cp $nginxfile /etc/nginx/sites-available/\n"
-
-# Start the gunicorn socket
-echo "Start gunicorn service:"
-echo "  sudo systemctl start gunicorn"
-echo "  sudo systemctl enable gunicorn\n"
-
-# Setup nginx
-echo "Setup nginx:"
-echo "  sudo ln -s /etc/nginx/sites-available/$nginxfile /etc/nginx/sites-enabled"
 

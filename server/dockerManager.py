@@ -30,9 +30,9 @@ class DockerManager:
                 self.logger.debug("Removing container: %s", container.name)
                 container.remove(v=True, force=True)
                 return
-        # log error
-        self.logger.error("Could not find container with name: %s", name)
-        raise DockerException(f"Could not find container with name: {name}")
+        # log warn
+        self.logger.warn("Could not find container with name: %s", name)
+        # raise DockerException(f"Could not find container with name: {name}")
 
     def deleteImage(self, tagname: str) -> None:
         if [f"{tagname}:latest"] in [image.tags for image in self.client.images.list()]:
@@ -40,8 +40,8 @@ class DockerManager:
             self.logger.debug("Deleting image: %s", tagname)
             self.client.images.remove(image=tagname)
         else:
-            self.logger.error("Image with %s not found", tagname)
-            raise DockerException(f"Image with {tagname} not found")
+            self.logger.warn("Image with %s not found", tagname)
+            # raise DockerException(f"Image with {tagname} not found")
 
     def buildImage(self, tagname: str, build_context: str, dockerfile: str) -> None:
         # log building image
@@ -58,7 +58,12 @@ class DockerManager:
         # log starting container
         # TODO: Parse info for volumes etc
         self.logger.debug("Running new image: %s with image %s", name, tagname)
-        self.client.containers.run(tagname, name=name, detach=True)
+        self.client.containers.run(
+            tagname,
+            name=name,
+            detach=True,
+            auto_remove=True
+        )
         # Try and add check for running container
 
     def reload(self, name: str, tagname: str, build_context: str,) -> None:

@@ -27,6 +27,10 @@ if not DEV_DIRECTORY or not SECRET_KEY:
 if not path.isdir(DEV_DIRECTORY):
     os.mkdir(DEV_DIRECTORY)
 
+@app.get('/')
+def ping():
+    return "Okay", 200
+
 
 @app.post('/webhooks')
 def push_event():
@@ -59,8 +63,8 @@ def push_event():
 
             app.logger.info(f"Reloading docker image for {payload.repository.name}")
             dockerManager.reload(
-                payload.repository.name,
-                payload.repository.full_name,
+                payload.repository.name.lower(),
+                payload.repository.full_name.lower(),
                 repo_dir,
             )
 
