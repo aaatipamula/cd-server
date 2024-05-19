@@ -6,11 +6,15 @@ import logging
 
 class DockerManager:
 
-    def __init__(self, logger = None) -> None:
+    def __init__(self, logger=None) -> None:
         self.logger = logger if logger else logging.getLogger("dockerManager")
         self.logger.setLevel(logging.DEBUG)
 
         self.client = docker.from_env()
+
+    @property
+    def containers(self):
+        return self.client.containers.list(all=True) # Known pyright error
 
     @staticmethod
     def findDockerfile(directory: str) -> str:
@@ -20,6 +24,9 @@ class DockerManager:
         elif path.isfile(location_two): return location_two
         # Raise specific exception type
         raise DockerException("Dockerfile not found")
+
+    def addLogger(self, logger) -> None:
+        self.logger = logger
 
     def stopContainer(self, name: str) -> None:
         for container in self.client.containers.list(all=True):

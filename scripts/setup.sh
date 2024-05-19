@@ -5,15 +5,14 @@ servicefile="gunicorn.service"
 nginxfile="cd_server"
 
 key=$(python3 ./server/secret.py)
-devfolder=$(pwd | sed 's/\/[a-zA-Z0-1_-]\+$/\/projects/')
+devfolder="$HOME/projects"
 
 clean() {
-  echo "Removing service and socket files, env, and nginx config file"
-  rm gunicorn.* .env $nginxfile
+  echo "Removing ./build"
+  sleep 3
+  rm -rf ./build
   echo "Removing python virtual env"
   rm -rf .venv/
-  echo "Permanently removing $devfolder"
-  rm -rf $devfolder
 }
 
 
@@ -51,9 +50,6 @@ if [ "$?" -ne "0" ]
 then
   echo "Something went wrong starting a venv..."
 fi
-
-# Make a projects folder
-mkdir $devfolder
 
 if ! [ -f .env ]
 then
@@ -93,6 +89,8 @@ printf "\t\tproxy_pass http://unix:/run/gunicorn.sock;\n" >> $nginxfile
 printf "\t}\n" >> $nginxfile
 printf "}\n" >> $nginxfile
 
+mkdir build
+mv $servicefile $socketfile $nginxfile build
 
 # Additional requirements
 echo "WARNING: Requires sudo access to write service files.\n"
@@ -100,8 +98,8 @@ read -p "Continue? [y/n]: " is_continue
 
 if [ "$is_continue" = "y" ] || [ "$is_continue" = "Y" ]
 then
-  sudo cp $socketfile $servicefile /etc/systemd/system/
-  sudo cp $nginxfile /etc/nginx/sites-available/
+  sudo cp ./build/$socketfile ./build$servicefile /etc/systemd/system/
+  sudo cp ./build/$nginxfile /etc/nginx/sites-available/
 
   sudo systemctl start gunicorn
   sudo systemctl enable gunicorn
@@ -110,12 +108,13 @@ then
   sudo systemctl restart nginx
 
 elif [ "$is_continue" = "n" ] || [ "$is_continue" = "N" ]
+then
   echo "Skipping write, please find a way to enter the following commands."
 
   # Copy over the service and config files
   echo "Copy service and config files:"
-  echo "  sudo cp $socketfile $servicefile /etc/systemd/system/"
-  echo "  sudo cp $nginxfile /etc/nginx/sites-available/\n"
+  echo "  sudo cp ./build$socketfile ./build/$servicefile /etc/systemd/system/"
+  echo "  sudo cp ./build/$nginxfile /etc/nginx/sites-available/\n"
 
   # Start the gunicorn socket
   echo "Start gunicorn service:"
