@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional, List, Literal
 
-from server.utils.githubUser import GitHubUser
+from server.models.githubUser import GitHubUser
 
 class InvalidFormat(BaseException): ...
 

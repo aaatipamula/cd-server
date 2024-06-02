@@ -1,8 +1,10 @@
 import docker
 from docker.errors import DockerException
+from docker.models.containers import Container
 
 import os.path as path
 import logging
+
 
 class DockerManager:
 
@@ -24,6 +26,9 @@ class DockerManager:
         elif path.isfile(location_two): return location_two
         # Raise specific exception type
         raise DockerException("Dockerfile not found")
+
+    def getContainer(self, id: str):
+        return self.client.containers.get(id)
 
     def addLogger(self, logger) -> None:
         self.logger = logger

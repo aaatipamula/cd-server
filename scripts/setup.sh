@@ -5,7 +5,7 @@ servicefile="gunicorn.service"
 nginxfile="cd_server"
 
 key=$(python3 ./server/secret.py)
-devfolder="$HOME/projects"
+devdir="$HOME/projects"
 
 clean() {
   echo "Removing ./build"
@@ -55,7 +55,10 @@ if ! [ -f .env ]
 then
   # Write our .env file
   echo FLASK_SECRET_KEY=$key > .env
-  echo FLASK_DEV_FOLDER=$devfolder >> .env
+  echo FLASK_DEV_DIRECTORY=$devdir >> .env
+  echo FLASK_AUTH_USERNAME=$(whoami) >> .env
+  read -p "Enter your password: "$'\n' -s password
+  echo FLASK_AUTH_PASSOWRD=$password >> .env
 else
   echo ".env found"
 fi

@@ -1,49 +1,28 @@
-from os import path
-from typing import Dict
-
 from flask import Blueprint, current_app, render_template, request
 
 from server import dockerManager
+from server.util import getEnv
+from server.auth import requires_auth
 
 admin = Blueprint("admin", __name__, url_prefix="/admin")
 
-def getEnvContent(basepath: str, name: str) -> str:
-    env_path = path.join(basepath, name, ".env")
-    print(env_path)
-    try:
-        with open(env_path) as file:
-            content = file.read()
-        return content
-    except FileNotFoundError:
-        return ""
-
-def parseEnv(env_content: str) -> Dict[str, str]:
-    env = {}
-
-    for var in env_content.splitlines():
-        pair = var.split("=")
-        if len(pair) == 2:
-            key, value = pair
-            env[key] = value
-
-    return env
-
-def getEnv(basepath: str, name: str) -> Dict[str, str]:
-    file_content = getEnvContent(basepath, name)
-    return parseEnv(file_content)
-
 @admin.get("/")
+@requires_auth()
 def get_admin():
+    DEV_DIRECTORY = current_app.config["DEV_DIRECTORY"]
+
     containers = [
         {
             "id": container.id,
             "name": container.name,
             "image": ", ".join(container.image.tags),
             "status": container.status,
-            "logs": container.logs(tail=30).decode('utf-8'),
-            "env": getEnv(current_app.config["DEV_FOLDER"], container.name)
+            "logs": container.logs(tail=200).decode('utf-8'),
+            "env": getEnv(DEV_DIRECTORY, container.name)
         }
         for container in dockerManager.containers
     ]
-    return render_template("admin.html", containers=containers)
+    active_container = request.args.get("active", containers[0]["name"])
+
+    return render_template("admin.html", containers=containers, active=active_container)
     
