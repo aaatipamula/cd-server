@@ -14,6 +14,7 @@ def compare(secret_key: str, request_body: str, request_signature: str) -> bool:
     generated_hash = "sha256=" + hmac_obj.hexdigest()
     return hmac.compare_digest(generated_hash, request_signature)
 
+
 def main():
     print(gen_key())
 

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %} <title>Log In</title> {% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center align-items-center vh-100">
+  <div class="border rounded p-4 justify-content-center" style="width: 80vh;">
+    <form method="POST">
+      <h3 class="mb-3">Log In</h3>
+
+      {% if error %}
+      <div class="row mb-4">
+        <div class="col d-flex justify-content-center">
+          <div class="alert alert-danger" role="alert">
+            {{ error }}
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="form-floating mb-3">
+        <input type="text" class="form-control" id="floatingInput" name="username" placeholder="Username">
+        <label for="floatingInput">Username</label>
+      </div>
+
+      <div class="form-floating mb-3">
+        <input type="password" class="form-control" id="floatingPassword" name="password" placeholder="Password">
+        <label for="floatingPassword">Password</label>
+      </div>
+
+      <input type="submit" class="btn btn-primary btn-block mb-3" value="Log In"/>
+    </form>
+  </div>
+</div>
+{% endblock %}
+

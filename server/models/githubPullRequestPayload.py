@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 from typing import Optional
 
-from server.utils.githubPullRequest import PullRequest
-from server.utils.githubRepo import Repository
-from server.utils.githubUser import GitHubUser
+from server.models.githubPullRequest import PullRequest
+from server.models.githubRepo import Repository
+from server.models.githubUser import GitHubUser
 
 @dataclass()
 class Payload:
