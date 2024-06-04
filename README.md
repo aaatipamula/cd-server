@@ -3,8 +3,10 @@
 ## Environment Variables
 
 ```sh
-DEV_FOLDER # Path to directory to host files
-SECRET_KEY # Key to verify, use src/secret_key.py to generate
+FLASK_DEV_FOLDER # Path to directory to host files
+FLASK_SECRET_KEY # Key to verify, use src/secret_key.py to generate
+FLASK_AUTH_USERNAME # Admin Username
+FLASK_AUTH_PASSWORD # Admin Password
 ```
 ## Host Locally
 
@@ -19,10 +21,15 @@ Install dependencies
 
 ```sh
 pip install -r requirements.txt
+```
+
+Install Gunicorn
+
+```sh
 pip install gunicorn
 ```
 
-Start Gunicorn
+Start Gunicorn in the background
 
 ```sh
 nohup gunicorn -w 4 'server.main:app' > gunicorn.log 2>&1 &
@@ -41,7 +48,7 @@ sudo systemctl enable gunicorn
 ## Start Server
 
 ```sh
-python3 -m flask --app server.server run
+python3 -m flask --app server --debug run
 ```
 
 ## Forward Github Webhooks

@@ -25,13 +25,13 @@ def requires_auth(is_api=False):
             if 'logged_in' not in session:
                 if is_api:
                     return jsonify({"error": "Unauthorized"}), 401
-                return redirect(url_for('login'))
+                return redirect(url_for('auth.login'))
             now = datetime.now()
             last_activity = session.get('last_activity', now)
             if now - last_activity > current_app.permanent_session_lifetime:
                 if is_api:
                     return jsonify({"error": "Session expired"}), 401
-                return redirect(url_for('logout'))
+                return redirect(url_for('auth.logout'))
             session['last_activity'] = now
             return f(*args, **kwargs)
         return decorated
@@ -48,7 +48,6 @@ def login():
     if request.method == "POST":
         username = request.form['username']
         password = request.form['password']
-        print(username, password)
         if check_auth(username, password):
             session['logged_in'] = True
             session['last_activity'] = datetime.now()

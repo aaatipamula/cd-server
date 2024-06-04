@@ -75,7 +75,7 @@ printf "ExecStart=$(pwd)/.venv/bin/gunicorn \\" >> $servicefile
 printf "\n\t--access-logfile - \\" >> $servicefile
 printf "\n\t--workers 4 \\" >> $servicefile
 printf "\n\t--bind unix:/run/gunicorn.sock \\" >> $servicefile
-printf "\n\tserver.main:app \n\n" >> $servicefile
+printf "\n\'server:create_app()' \n\n" >> $servicefile
 printf "[Install]\nWantedBy=multi-user.target\n" >> $servicefile
 
 # Create nginx config file
@@ -101,11 +101,12 @@ read -p "Continue? [y/n]: " is_continue
 
 if [ "$is_continue" = "y" ] || [ "$is_continue" = "Y" ]
 then
-  sudo cp ./build/$socketfile ./build$servicefile /etc/systemd/system/
+  sudo cp ./build/$socketfile ./build/$servicefile /etc/systemd/system/
   sudo cp ./build/$nginxfile /etc/nginx/sites-available/
 
   sudo systemctl start gunicorn
   sudo systemctl enable gunicorn
+  sudo systemctl daemon-reload
 
   sudo ln -s /etc/nginx/sites-available/$nginxfile /etc/nginx/sites-enabled
   sudo systemctl restart nginx
