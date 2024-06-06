@@ -7,4 +7,5 @@ test*
 gunicorn.*
 cd_server
 flask_session/
+instance/
 
