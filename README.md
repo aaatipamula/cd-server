@@ -7,6 +7,7 @@ FLASK_DEV_FOLDER # Path to directory to host files
 FLASK_SECRET_KEY # Key to verify, use src/secret_key.py to generate
 FLASK_AUTH_USERNAME # Admin Username
 FLASK_AUTH_PASSWORD # Admin Password
+FLASK_DOCKER_RELOAD_SCRIPT # Location to docker reload script
 ```
 ## Host Locally
 
