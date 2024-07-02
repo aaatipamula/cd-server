@@ -4,7 +4,7 @@ from hashlib import sha256
 import secrets
 import hmac
 
-def gen_key(*, length: int = 128) -> str:
+def gen_key(*, length: int = 32) -> str:
     return secrets.token_urlsafe(length)
 
 def compare(secret_key: str, request_body: str, request_signature: str) -> bool:
@@ -13,7 +13,6 @@ def compare(secret_key: str, request_body: str, request_signature: str) -> bool:
     hmac_obj = hmac.new(bsecret_key, msg=brequest_body, digestmod=sha256)
     generated_hash = "sha256=" + hmac_obj.hexdigest()
     return hmac.compare_digest(generated_hash, request_signature)
-
 
 def main():
     print(gen_key())

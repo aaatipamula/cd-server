@@ -6,7 +6,7 @@ from server.models.githubRepo import Repository
 from server.models.githubUser import GitHubUser
 
 @dataclass()
-class Payload:
+class PullRequestPayload:
     action: str
     number: int
     sender: GitHubUser

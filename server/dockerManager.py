@@ -71,7 +71,7 @@ class DockerManager:
         # TODO: Parse info for volumes etc
         self.logger.debug("Running new image: %s with image %s", name, tagname)
         self.client.containers.run(
-            tagname,
+            f"{tagname}:latest",
             name=name,
             detach=True,
             auto_remove=True
