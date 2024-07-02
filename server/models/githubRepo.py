@@ -86,6 +86,8 @@ class Repository:
     open_issues: int
     watchers: int
     default_branch: str
+    stargazers: object
+    master_branch: str
 
     def __post_init__(self) -> None:
         if re.match(r"^[\w\-]+$", self.name) is None:

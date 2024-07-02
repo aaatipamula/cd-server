@@ -13,17 +13,15 @@ class PushPayload:
     compare: str
     created: bool
     deleted: bool
-    enterprise: Optional[object]
     forced: bool
     head_commit: Optional[object]
-    installation: Optional[object]
-    organization: Optional[object]
     pusher: Optional[object]
     ref: str
     repository: Repository
     sender: GitHubUser
-    enterprise: Optional[object]
-    installation: Optional[object]
+    enterprise: Optional[object] = None
+    installation: Optional[object] = None
+    organization: Optional[object] = None
 
     def __post_init__(self):
         if isinstance(self.repository, dict):

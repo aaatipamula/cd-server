@@ -26,7 +26,7 @@ def push_event():
 
         payload = PushPayload(**request.json) \
             if "after" in request.json else PullRequestPayload(**request.json)
-        repo_dir = path.join(DEV_DIRECTORY, payload.repository.name)
+        repo_dir = path.join(DEV_DIRECTORY, payload.repository.name.lower())
 
         request_signature = request.headers.get('X_HUB_SIGNATURE_256')
         if request_signature is None:
@@ -43,10 +43,10 @@ def push_event():
             if not path.isdir(repo_dir):
                 current_app.logger.info("Cloning directory.")
                 os.chdir(DEV_DIRECTORY)
-                sp.run(['git', 'clone', payload.repository.clone_url])
+                sp.run(['git', 'clone', payload.repository.clone_url, payload.repository.name.lower()])
                 os.chdir(repo_dir)
             else:
-                current_app.logger.info(f"Updating {payload.repository.name}")
+                current_app.logger.info(f"Updating {payload.repository.name.lower()}")
                 os.chdir(repo_dir)
                 sp.run(['git', 'pull'])
 
