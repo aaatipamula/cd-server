@@ -36,6 +36,7 @@ then
   then
     docker run -d \
       -it \
+      --restart unless-stopped \
       --name $1 \
       --mount type=bind,source=$(pwd)/src/data,target=/home/bot/src/data \
       $USERNAME/$1:latest

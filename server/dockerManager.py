@@ -74,7 +74,8 @@ class DockerManager:
             f"{tagname}:latest",
             name=name,
             detach=True,
-            auto_remove=True
+            auto_remove=True,
+            restart_policy={"Name": "always", "MaximumRetryCount": 5}
         )
         # Try and add check for running container
 
