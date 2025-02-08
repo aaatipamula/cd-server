@@ -21,7 +21,7 @@ def create_app():
     app.config['SESSION_TYPE'] = "filesystem"
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=5)  # Reset session lifetime on each request
 
-    if app.config.get('AUTH_USERNAME') is None or app.config.get('AUTH_USERNAME') is None:
+    if app.config.get('AUTH_USERNAME') is None or app.config.get('AUTH_PASSWORD') is None:
         raise Exception("Missing Username and/or Password definition(s).")
 
     db.init_app(app)

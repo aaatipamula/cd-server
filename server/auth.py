@@ -5,17 +5,24 @@ from functools import wraps
 
 from flask import Blueprint, redirect, render_template, current_app, request, session, url_for, jsonify
 
+from server.secret import verify_password
+
 auth = Blueprint("auth", __name__, url_prefix="/auth")
 
-USERNAME = os.environ.get('FLASK_AUTH_USERNAME', 'test')
-PASSWORD = os.environ.get('FLASK_AUTH_PASSWORD', '123')
+USERNAME = os.environ.get('FLASK_AUTH_USERNAME')
+PASSWORD = os.environ.get('FLASK_AUTH_PASSWORD')
+
+if USERNAME is None or PASSWORD is None:
+    raise Exception("Missing Username and/or Password definition(s).")
 
 err_codes = {
     "10": "Invalid login"
 }
 
 def check_auth(username, password):
-    return hmac.compare_digest(username, USERNAME) and hmac.compare_digest(password, PASSWORD)
+    valid_user = hmac.compare_digest(username, USERNAME)
+    valid_pass = verify_password(PASSWORD, password)
+    return valid_user and valid_pass
 
 def requires_auth(is_api=False):
     """Decorator to prompt for login or return JSON for API endpoints."""
@@ -61,5 +68,5 @@ def login():
 @auth.route('/logout')
 def logout():
     session.pop('logged_in', None)
-    return redirect(url_for('login'))
+    return redirect(url_for('auth.login'))
 

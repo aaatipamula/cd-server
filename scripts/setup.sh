@@ -1,10 +1,10 @@
 #!/bin/sh
 
-socketfile="gunicorn.socket"
-servicefile="gunicorn.service"
+socketfile="cd_server.socket"
+servicefile="cd_server.service"
 nginxfile="cd_server"
 
-key=$(python3 ./server/secret.py)
+key=$(python3 ./server/secret.py getkey)
 devdir="$HOME/projects"
 
 clean() {
@@ -19,7 +19,7 @@ clean() {
 # Check for proper command line arguments
 if [ -z $1 ]
 then
-  echo "Please provide a username"
+  echo "Please provide a username or clean"
   exit 1
 elif [ "$1" = "clean" ]
 then
@@ -49,6 +49,7 @@ fi
 if [ "$?" -ne "0" ]
 then
   echo "Something went wrong starting a venv..."
+  exit 1
 fi
 
 if ! [ -f .env ]
@@ -56,9 +57,8 @@ then
   # Write our .env file
   echo FLASK_SECRET_KEY=$key > .env
   echo FLASK_DEV_DIRECTORY=$devdir >> .env
-  echo FLASK_AUTH_USERNAME=$(whoami) >> .env
-  read -p "Enter your password: "$'\n' -s password
-  echo FLASK_AUTH_PASSOWRD=$password >> .env
+  echo FLASK_AUTH_USERNAME=$1 >> .env
+  echo FLASK_AUTH_PASSWORD=$(./server/secret.py passwd) >> .env
 else
   echo ".env found"
 fi
