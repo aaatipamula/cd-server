@@ -22,10 +22,14 @@ def push_event():
 
     try:
         if request.json is None:
-            return {"error": "No data in request"}, 400
+            return {"error": "No data in request."}, 400
 
-        payload = PushPayload(**request.json) \
-            if "after" in request.json else PullRequestPayload(**request.json)
+        try:
+            payload = PushPayload(**request.json) \
+                if "after" in request.json else PullRequestPayload(**request.json)
+        except TypeError:
+            return {"error": "GitHub payload contains unexpected data."}
+
         repo_dir = path.join(DEV_DIRECTORY, payload.repository.name.lower())
 
         request_signature = request.headers.get('X_HUB_SIGNATURE_256')
