@@ -27,8 +27,9 @@ def push_event():
         try:
             payload = PushPayload(**request.json) \
                 if "after" in request.json else PullRequestPayload(**request.json)
-        except TypeError:
-            return {"error": "GitHub payload contains unexpected data."}
+        except TypeError as err:
+            traceback.print_exception(err)
+            return {"error": "GitHub payload contains unexpected data."}, 400
 
         repo_dir = path.join(DEV_DIRECTORY, payload.repository.name.lower())
 

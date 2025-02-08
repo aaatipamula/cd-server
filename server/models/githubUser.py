@@ -26,4 +26,5 @@ class GitHubUser(Base):
     name: Optional[str] = None
     email: Optional[str] = None
     starred_at: Optional[str] = None
+    user_view_type: Optional[str] = None
 
