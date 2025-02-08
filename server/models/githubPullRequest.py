@@ -1,12 +1,13 @@
 from dataclasses import dataclass
 from typing import Optional, List, Literal
 
+from server.models.base import Base
 from server.models.githubUser import GitHubUser
 
 class InvalidFormat(BaseException): ...
 
 @dataclass(frozen=True)
-class PullRequestLabel:
+class PullRequestLabel(Base):
     id: int
     node_id: str
     url: str
@@ -15,7 +16,7 @@ class PullRequestLabel:
     description: Optional[str] = None
 
 @dataclass()
-class PullRequestMilestone:
+class PullRequestMilestone(Base):
     url: str
     html_url: str
     labels_url: str
@@ -38,7 +39,7 @@ class PullRequestMilestone:
             self.creator = GitHubUser(**self.creator)
 
 @dataclass()
-class PullRequest:
+class PullRequest(Base):
     url: str
     id: int
     node_id: str

@@ -1,11 +1,12 @@
 from dataclasses import dataclass
 from typing import Optional, List
 
+from server.models.base import Base
 from server.models.githubRepo import Repository
 from server.models.githubUser import GitHubUser
 
 @dataclass()
-class PushPayload:
+class PushPayload(Base):
     after: str
     base_ref: Optional[str]
     before: str

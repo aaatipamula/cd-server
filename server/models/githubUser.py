@@ -1,8 +1,10 @@
 from dataclasses import dataclass
 from typing import Optional
 
+from server.models.base import Base
+
 @dataclass(frozen=True)
-class GitHubUser:
+class GitHubUser(Base):
     id: int
     login: str
     node_id: str

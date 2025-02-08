@@ -1,12 +1,13 @@
 from dataclasses import dataclass
 from typing import Optional
+from server.models.base import Base
 
 from server.models.githubPullRequest import PullRequest
 from server.models.githubRepo import Repository
 from server.models.githubUser import GitHubUser
 
 @dataclass()
-class PullRequestPayload:
+class PullRequestPayload(Base):
     action: str
     number: int
     sender: GitHubUser

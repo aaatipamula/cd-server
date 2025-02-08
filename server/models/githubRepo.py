@@ -1,12 +1,12 @@
-
 from dataclasses import dataclass
 from typing import Optional
 import re
 
+from server.models.base import Base
 from server.models.githubUser import GitHubUser
 
 @dataclass(frozen=True)
-class Repository:
+class Repository(Base):
     id: int
     node_id: str
     name: str
