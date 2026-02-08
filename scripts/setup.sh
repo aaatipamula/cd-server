@@ -1,10 +1,13 @@
-#!/bin/sh
+#!/bin/bash
+
+set -e
 
 socketfile="cd_server.socket"
 servicefile="cd_server.service"
 nginxfile="cd_server"
 
-key=$(python3 ./server/secret.py getkey)
+password=$(./server/secret.py passwd)
+key=$(python3 ./server/secret.py genkey)
 devdir="$HOME/projects"
 
 clean() {
@@ -55,26 +58,26 @@ fi
 if ! [ -f .env ]
 then
   # Write our .env file
-  echo FLASK_SECRET_KEY=$key > .env
-  echo FLASK_DEV_DIRECTORY=$devdir >> .env
-  echo FLASK_AUTH_USERNAME=$1 >> .env
-  echo FLASK_AUTH_PASSWORD=$(./server/secret.py passwd) >> .env
+  echo "FLASK_SECRET_KEY=$key" > .env
+  echo "FLASK_DEV_DIRECTORY=$devdir" >> .env
+  echo "FLASK_AUTH_USERNAME=$1" >> .env
+  echo "FLASK_AUTH_PASSWORD=$password" >> .env
 else
   echo ".env found"
 fi
 
-# Create the gunicorn.socket file
+# Create the socket file
 printf "[Unit]\nDescription=Gunicorn socket\n\n" > $socketfile
-printf "[Socket]\nListenStream=/run/gunicorn.sock\n\n" >> $socketfile
+printf "[Socket]\nListenStream=/run/$nginxfile.sock\n\n" >> $socketfile
 printf "[Install]\nWantedBy=sockets.target\n" >> $socketfile
 
-# Create the gunicorn.service file
-printf "[Unit]\nDescription=Gunicorn daemon\nRequires=gunicorn.socket\nAfter=network.target\n\n" > $servicefile
+# Create the service file
+printf "[Unit]\nDescription=Gunicorn daemon\nRequires=$nginxfile.socket\nAfter=network.target\n\n" > $servicefile
 printf "[Service]\nUser=$1\nGroup=www-data\nWorkingDirectory=$(pwd)\n" >> $servicefile
 printf "ExecStart=$(pwd)/.venv/bin/gunicorn \\" >> $servicefile
 printf "\n\t--access-logfile - \\" >> $servicefile
 printf "\n\t--workers 4 \\" >> $servicefile
-printf "\n\t--bind unix:/run/gunicorn.sock \\" >> $servicefile
+printf "\n\t--bind unix:/run/$nginxfile.sock \\" >> $servicefile
 printf "\n\'server:create_app()' \n\n" >> $servicefile
 printf "[Install]\nWantedBy=multi-user.target\n" >> $servicefile
 
@@ -88,12 +91,15 @@ printf "\t\troot $(pwd);\n" >> $nginxfile
 printf "\t}\n\n" >> $nginxfile
 printf "\tlocation / {\n" >> $nginxfile
 printf "\t\tinclude proxy_params;\n" >> $nginxfile
-printf "\t\tproxy_pass http://unix:/run/gunicorn.sock;\n" >> $nginxfile
+printf "\t\tproxy_pass http://unix:/run/$nginxfile.sock;\n" >> $nginxfile
 printf "\t}\n" >> $nginxfile
 printf "}\n" >> $nginxfile
 
-mkdir build
-mv $servicefile $socketfile $nginxfile build
+if [[ ! -d build ]]; then
+  mkdir build
+fi
+
+mv -f $servicefile $socketfile $nginxfile build
 
 # Additional requirements
 echo "WARNING: Requires sudo access to write service files.\n"
@@ -104,8 +110,8 @@ then
   sudo cp ./build/$socketfile ./build/$servicefile /etc/systemd/system/
   sudo cp ./build/$nginxfile /etc/nginx/sites-available/
 
-  sudo systemctl start gunicorn
-  sudo systemctl enable gunicorn
+  sudo systemctl start $nginxfile
+  sudo systemctl enable $nginxfile
   sudo systemctl daemon-reload
 
   sudo ln -s /etc/nginx/sites-available/$nginxfile /etc/nginx/sites-enabled
@@ -120,10 +126,10 @@ then
   echo "  sudo cp ./build$socketfile ./build/$servicefile /etc/systemd/system/"
   echo "  sudo cp ./build/$nginxfile /etc/nginx/sites-available/\n"
 
-  # Start the gunicorn socket
-  echo "Start gunicorn service:"
-  echo "  sudo systemctl start gunicorn"
-  echo "  sudo systemctl enable gunicorn\n"
+  # Start the socket
+  echo "Start $nginxfile service:"
+  echo "  sudo systemctl start $nginxfile"
+  echo "  sudo systemctl enable $nginxfile\n"
 
   # Setup nginx
   echo "Setup nginx:"
@@ -137,5 +143,5 @@ fi
 echo "Load venv and install packages"
 echo "  source .venv/bin/activate"
 echo "  pip install -r requirements.txt"
-echo "  pip install gunicorn\n"
+echo "  pip install $nginxfile\n"
 

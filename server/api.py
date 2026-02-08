@@ -21,6 +21,8 @@ def push_event():
     DOCKER_RELOAD_SCRIPT = current_app.config["DOCKER_RELOAD_SCRIPT"]
 
     try:
+        branch = request.args.get("branch") or "master"
+
         if request.json is None:
             return {"error": "No data in request."}, 400
 
@@ -51,9 +53,13 @@ def push_event():
                 sp.run(['git', 'clone', payload.repository.clone_url, payload.repository.name.lower()])
                 os.chdir(repo_dir)
             else:
-                current_app.logger.info(f"Updating {payload.repository.name.lower()}")
                 os.chdir(repo_dir)
-                sp.run(['git', 'pull'])
+
+            current_app.logger.info(f"Changing Branch to {branch}")
+            sp.run(['git', 'checkout', branch])
+
+            current_app.logger.info(f"Updating {payload.repository.name.lower()}")
+            sp.run(['git', 'pull'])
 
             current_app.logger.info(f"Reloading docker image for {payload.repository.name}")
             # dockerManager.reload(
